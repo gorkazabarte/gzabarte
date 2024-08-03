@@ -1,0 +1,15 @@
+# Python virtual environment
+*venv*
+
+# Python compiled files
+**/__pycache__/*
+
+# Visual Studio Code
+**/.vscode/*
+
+# Nodejs
+**/node_modules/*
+
+# JetBrains IDEs
+**/.idea/*
+

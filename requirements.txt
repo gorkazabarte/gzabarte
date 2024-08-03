@@ -1,0 +1,10 @@
+fastapi[standard]==0.115.12
+mplfinance==0.12.10b0
+numpy==2.2.4
+pandas==2.2.3
+pydantic==2.11.5
+pylint==3.3.6
+pytest==8.3.5
+requests==2.32.4
+uvicorn[standard]==0.34.3
+yfinance==0.2.55
