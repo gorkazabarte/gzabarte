@@ -20,42 +20,34 @@ permissions:
   id-token: write
   contents: read
 jobs:
-  terraform-bucket-creation:
+  prepare:
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-          aws-region: us-west-2
-  deploy:
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    steps:
-      - uses: actions/checkout@v4
+          fetch-depth: 0
       - name: Configure AWS credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
           aws-region: us-west-2
-      - name: Install Terraform
-        uses: hashicorp/setup-terraform@v3
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v0.11.0
         with:
-          terraform_version: 1.10.5
-      - name: Install Terragrunt
-        uses: autero1/action-terragrunt@v3
+          versionSpec: '5.x'
+      - name: Run GitVersion
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v0.11.0
+      - name: Show GitVersion
+        run: |
+          echo "VERSION=${{ steps.gitversion.outputs.major }}.${{ steps.gitversion.outputs.minor }}" | tee version.txt
+      - name: Upload Version artifact
+        uses: actions/upload-artifact@v4
         with:
-          terragrunt-version: 0.80.4
-      - name: Create Frontend bucket
-        run: ./.github/scripts/create_bucket.sh
-        env:
-          APP_NAME: ${{ inputs.app_name }}
-          AWS_IAM_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
-          ENVIRONMENT: ${{ inputs.environment }}
-          BUCKET: ${{ inputs.environment }}-${{ inputs.app_name }}-frontend
+          name: version
+          path: ./version.txt
       - name: Create Terraform bucket
         run: ./.github/scripts/create_bucket.sh
         env:
@@ -63,26 +55,69 @@ jobs:
           AWS_IAM_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
           ENVIRONMENT: ${{ inputs.environment }}
           BUCKET: ${{ inputs.environment }}-${{ inputs.app_name }}-tf
-      - name: Frontend deployment
-        run: ./.github/scripts/deploy_frontend.sh
+      - name: Create Frontend bucket
+        run: ./.github/scripts/create_bucket.sh
         env:
           APP_NAME: ${{ inputs.app_name }}
+          AWS_IAM_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
           ENVIRONMENT: ${{ inputs.environment }}
-          TF_BUCKET: ${{ inputs.environment }}-${{ inputs.app_name }}-frontend
+          BUCKET: ${{ inputs.environment }}-${{ inputs.app_name }}-frontend
+  build:
+    runs-on: ubuntu-latest
+    needs: prepare
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+          aws-region: us-west-2
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Build Frontend
+      - name: Build Frontend with NPM
         working-directory: source/frontend
         run: |
           npm ci
           npm run build
+      - name: Upload Frontend artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: source/frontend/dist
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: source/frontend/dist
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+          aws-region: us-west-2
+      - name: Create Frontend bucket
+        run: ./.github/scripts/create_bucket.sh
+        env:
+          APP_NAME: ${{ inputs.app_name }}
+          AWS_IAM_ROLE: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github
+          ENVIRONMENT: ${{ inputs.environment }}
+          BUCKET: ${{ inputs.environment }}-${{ inputs.app_name }}-frontend
       - name: Upload Frontend to S3
         working-directory: source/frontend
-        run: |
-          aws s3 sync ./dist "s3://${{ inputs.environment }}-${{ inputs.app_name }}-frontend" --delete
         env:
           AWS_DEFAULT_REGION: us-west-2
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          echo "Upload frontend to S3 bucket: ${ENVIRONMENT}-${{ inputs.app_name }}-frontend"
+          aws s3 sync ./dist "s3://${ENVIRONMENT}-${{ inputs.app_name }}-frontend" --delete
       - name: Install Terraform
         uses: hashicorp/setup-terraform@v3
         with:
@@ -99,8 +134,8 @@ jobs:
           CLOUDFRONT_DISTRIBUTION_ID=$(terragrunt output -raw cloudfront_distribution_id)
           aws cloudfront create-invalidation --distribution-id "${CLOUDFRONT_DISTRIBUTION_ID}" --paths "/*"
         env:
-          APP_NAME: gzabarte
+          APP_NAME: ${{ inputs.app_name }}
           APP_VERSION: ${{ needs.prepare.outputs.version }}
           AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
           ENVIRONMENT: ${{ inputs.environment }}
-          TF_BUCKET: ${{ inputs.environment }}-{{ inputs.app_name }}$-tf
+          TF_BUCKET: ${{ inputs.environment }}-${{ inputs.app_name }}-tf
