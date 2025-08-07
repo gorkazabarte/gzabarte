@@ -9,9 +9,15 @@ const experiences = [
     period: '2022 - Present',
     logo: align,
     bullets: [
-      'Designed and implemented AWS serverless applications, including Step Functions, Lambda, EventBridge, and DynamoDB.',
-      'Implemented CI/CD pipelines using Bamboo, ensuring automated build, test, and deploy processes.',
-      'Monitored results and cloud system behavior using CloudWatch and Splunk.'
+        'Followed DevOps best practices, including collaboration with developers, automated CI/CD pipelines, and blue/green deployments, and more.',
+        'Collaborated with cross-functional teams to deliver highly available and scalable cloud-native solutions.',
+        'Designed and implemented AWS serverless applications using Lambda, Step Functions, API Gateway, S3, DynamoDB, and EventBridge.',
+        'Extensive hands-on experience with AWS services: Aurora, AppConfig, CloudFront, CloudWatch, ECR, EKS, RDS, Route53, and Systems Manager.',
+        'Implemented CI/CD pipelines using Bamboo, Bash, Python, and Terraform, ensuring automated build, test, and deployment processes.',
+        'Built event-driven architectures leveraging EventBridge for decoupled service communication.',
+        'Managed infrastructure as code with Terraform and Terragrunt across multiple environments.',
+        'Used CloudWatch for real-time application monitoring, custom metrics, and log alerts.',
+        'Integrated Splunk to visualize logs, analyze errors, and monitor system health.',
     ]
   },
   {
@@ -20,8 +26,13 @@ const experiences = [
     period: '2020 - 2023',
     logo: tws,
     bullets: [
-      'Developed and maintained an Python application and relational databases.',
-      'Created APIs using Python (FastAPI) and Postman.'
+        'Developed and maintained Python backend services for RESTful and event-driven applications.',
+        'Built automation scripts and microservices using Python',
+        'Worked with popular Python frameworks like FastAPI to build scalable APIs.',
+        'Integrated Python services with AWS services.',
+        'Utilized boto3 for AWS SDK automation tasks.',
+        'Created unit and integration tests using PyTest and unittest to ensure code reliability and test coverage.',
+        'Collaborated in Agile teams using Git, JIRA, and code reviews to maintain high software quality.'
     ]
   }
 ];

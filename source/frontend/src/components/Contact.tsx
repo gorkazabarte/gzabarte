@@ -13,7 +13,7 @@ const Contact = () => {
     setStatus('sending');
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/contact`, {
+      const response = await fetch(`https://ysvadm2b2a.execute-api.us-west-2.amazonaws.com/dev/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

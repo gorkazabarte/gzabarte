@@ -1,15 +1,16 @@
-# GZabarte
+# Personal gzabarte website 
+TODO: Add documentation of the whole project
 
-## Create a K8s cluster
-swapoff -a
-sudo kubeadm init --cri-socket unix:///var/run/crio/crio.sock
+## Infrastructure
+TODO
 
-mkdir -p $HOME/.kube
-sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+## Contact section
+TODO
 
-kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.3/manifests/calico.yaml
+The contact section has the following architecture: 
 
-## Delete a K8s cluster
-sudo kubeadm reset --cri-socket unix:///var/run/crio/crio.sock
-
+* User fills in the form
+* HTTP POST request is sent to the server 
+* Amazon API Gateway receives the request
+* AWS Step Function is started
+* State SES email
